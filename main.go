@@ -30,7 +30,7 @@ func connect(closeSig <-chan struct{}, query string) *websocket.Conn {
 	var ws *websocket.Conn
 	var err error
 
-	u = url.URL{Scheme: "wss", Host: "stublab.io:8808", Path: "/signal", RawQuery: query}
+	u = url.URL{Scheme: "wss", Host: "stublab.io:8800", Path: "/signal", RawQuery: query}
 	ws, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		// log.Println(err)
@@ -144,8 +144,8 @@ func main() {
 		}
 		query := "localUser=" + uuid.New().String() + "&remoteUser=" + conf.Uuid
 		ws := connect(closeSig, query)
-		defer ws.Close()
-		err = hub(ws)
+		// defer ws.Close()
+		err = hub(ws, closeSig)
 		if err != nil {
 			fmt.Println("error")
 			fmt.Println(err)

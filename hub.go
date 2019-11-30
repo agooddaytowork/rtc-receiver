@@ -20,7 +20,7 @@ func (rtc *Wrap) Write(data []byte) (int, error) {
 
 var pc *webrtc.PeerConnection
 
-func hub(ws *websocket.Conn) error {
+func hub(ws *websocket.Conn, closeSig <-chan struct{}) error {
 	var msg Session
 	for {
 		err := ws.ReadJSON(&msg)
@@ -31,7 +31,7 @@ func hub(ws *websocket.Conn) error {
 			}
 			break
 		}
-		err = startRTC(ws, msg)
+		err = startRTC(ws, msg, closeSig)
 		if err != nil {
 			return err
 		}
@@ -39,7 +39,7 @@ func hub(ws *websocket.Conn) error {
 	return nil
 }
 
-func startRTC(ws *websocket.Conn, data Session) error {
+func startRTC(ws *websocket.Conn, data Session, closeSig <-chan struct{}) error {
 	if data.Error != "" {
 		return fmt.Errorf(data.Error)
 	}
@@ -65,7 +65,7 @@ func startRTC(ws *websocket.Conn, data Session) error {
 
 		// DataChannel(dc, ssh)
 
-		VideoChannel(dc)
+		VideoChannel(dc, closeSig)
 		offer, err := pc.CreateOffer(nil)
 		if err != nil {
 			return err
@@ -98,8 +98,18 @@ func startRTC(ws *websocket.Conn, data Session) error {
 }
 
 // test commands
-func VideoChannel(dc *webrtc.DataChannel) {
+func VideoChannel(dc *webrtc.DataChannel, closeSig <-chan struct{}) {
 	dc.OnOpen(func() {
+
+		go func() {
+			for {
+				select {
+				case <-closeSig:
+					dc.SendText("closeSession")
+					return
+				}
+			}
+		}()
 	})
 	dc.OnMessage(func(msg webrtc.DataChannelMessage) {
 		// fmt.Println(msg.Data)
