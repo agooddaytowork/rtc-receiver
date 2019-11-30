@@ -30,7 +30,7 @@ func connect(closeSig <-chan struct{}, query string) *websocket.Conn {
 	var ws *websocket.Conn
 	var err error
 
-	u = url.URL{Scheme: "wss", Host: "stublab.io:8800", Path: "/signal", RawQuery: query}
+	u = url.URL{Scheme: "wss", Host: "stublab.io:8808", Path: "/signal", RawQuery: query}
 	ws, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		// log.Println(err)
@@ -152,7 +152,7 @@ func main() {
 			os.Exit(0)
 		}
 		select {}
-		time.Sleep(30 * time.Second)
+		time.Sleep(10 * time.Second)
 		// log.Println("Reconnect with the signaling server")
 	}
 
