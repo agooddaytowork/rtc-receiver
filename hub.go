@@ -57,7 +57,10 @@ func startRTC(ws *websocket.Conn, data Session, closeSig <-chan struct{}) error 
 		})
 
 		// dc, err := pc.CreateDataChannel("SSH", nil)
-		dc, err := pc.CreateDataChannel("videostream", nil)
+
+		vl := true
+		var restransmit uint16 = 10
+		dc, err := pc.CreateDataChannel("videostream", &webrtc.DataChannelInit{Ordered: &vl, MaxRetransmits: &restransmit})
 
 		if err != nil {
 			fmt.Println(err)
@@ -99,6 +102,7 @@ func startRTC(ws *websocket.Conn, data Session, closeSig <-chan struct{}) error 
 
 // test commands
 func VideoChannel(dc *webrtc.DataChannel, closeSig <-chan struct{}) {
+
 	dc.OnOpen(func() {
 
 		go func() {
@@ -106,6 +110,7 @@ func VideoChannel(dc *webrtc.DataChannel, closeSig <-chan struct{}) {
 				select {
 				case <-closeSig:
 					dc.SendText("closeSession")
+					dc.Close()
 					return
 				}
 			}
